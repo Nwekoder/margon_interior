@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model cart {
+  id         Int       @id
+  id_user    Int?
+  id_product Int?
+  quantity   Int?
+  users      users?    @relation(fields: [id_user], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "cart_ibfk_1")
+  products   products? @relation(fields: [id_product], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "cart_ibfk_2")
+
+  @@index([id_product], map: "id_product")
+  @@index([id_user], map: "id_user")
+}
+
+model categories {
+  id          Int        @id
+  name        String?    @db.VarChar(255)
+  description String?    @db.Text
+  products    products[]
+}
+
+model inventory {
+  id               Int                @id
+  quantity         Int?
+  product_variants product_variants[]
+}
+
+model order_items {
+  id         Int       @id
+  id_orders  Int?
+  id_product Int?
+  quantity   Int?
+  created_at DateTime  @default(now()) @db.Timestamp(0)
+  updated_at DateTime  @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  orders     orders?   @relation(fields: [id_orders], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "order_items_ibfk_1")
+  products   products? @relation(fields: [id_product], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "order_items_ibfk_2")
+
+  @@index([id_orders], map: "id_orders")
+  @@index([id_product], map: "id_product")
+}
+
+model orders {
+  id                Int             @id
+  id_user           Int?
+  id_payment_method Int?
+  subtotal          Int?
+  created_at        DateTime        @default(now()) @db.Timestamp(0)
+  updated_at        DateTime        @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  order_items       order_items[]
+  users             users?          @relation(fields: [id_user], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "orders_ibfk_1")
+  payment_method    payment_method? @relation(fields: [id_payment_method], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "orders_ibfk_2")
+
+  @@index([id_payment_method], map: "id_payment_method")
+  @@index([id_user], map: "id_user")
+}
+
+model payment_method {
+  id          Int      @id
+  name        String?  @db.VarChar(255)
+  description String?  @db.Text
+  orders      orders[]
+}
+
+model product_image {
+  id         Int       @id
+  id_product Int?
+  caption    String?   @db.VarChar(255)
+  file       String?   @db.Text
+  front      Boolean?
+  products   products? @relation(fields: [id_product], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "product_image_ibfk_1")
+
+  @@index([id_product], map: "id_product")
+}
+
+model product_variants {
+  id           Int        @id
+  id_product   Int?
+  name         String?    @db.VarChar(255)
+  description  String?    @db.Text
+  id_inventory Int?
+  products     products?  @relation(fields: [id_product], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "product_variants_ibfk_1")
+  inventory    inventory? @relation(fields: [id_inventory], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "product_variants_ibfk_2")
+
+  @@index([id_inventory], map: "id_inventory")
+  @@index([id_product], map: "id_product")
+}
+
+model products {
+  id               Int                @id
+  name             String?            @db.VarChar(255)
+  description      String?            @db.Text
+  price            Int?
+  id_category      Int?
+  created_at       DateTime           @default(now()) @db.Timestamp(0)
+  updated_at       DateTime           @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  cart             cart[]
+  order_items      order_items[]
+  product_image    product_image[]
+  product_variants product_variants[]
+  categories       categories?        @relation(fields: [id_category], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "products_ibfk_1")
+
+  @@index([id_category], map: "id_category")
+}
+
+model users {
+  id         Int      @id
+  username   String?  @db.VarChar(255)
+  password   String?  @db.VarChar(255)
+  full_name  String?  @db.VarChar(255)
+  phone      String?  @db.VarChar(255)
+  email      String?  @db.VarChar(255)
+  address    String?  @db.Text
+  verified   Boolean?
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  updated_at DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  cart       cart[]
+  orders     orders[]
+}
